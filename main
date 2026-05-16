@@ -1,0 +1,382 @@
+
+{Array(first).fill(null).map((_,i)=><div key={"e"+i}/>)}
+{Array.from({length:days},(_,i)=>{
+const day=i+1, dk=dateKey(selYear,selMonth,day);
+const status=getDayTopStatus(uid,dk,avData);
+const today=new Date();
+const
+isToday=today.getFullYear()===selYear&&today.getMonth()===selMonth&&today.getDate()===day;
+const isPast=new Date(selYear,selMonth,day)<new
+Date(today.getFullYear(),today.getMonth(),today.getDate());
+return (
+<div key={day} className="cell" onClick={()=>openDay(selYear,selMonth,day)}
+style={{borderRadius:"10px",padding:"8px 4px",textAlign:"center",
+background:status==="none"?"rgba(255,255,255,0.04)":COLORS[status]+"33",
+border:isToday?"2px solid #6366f1":status!=="none"?`1px solid $
+{COLORS[status]}44`:"1px solid rgba(255,255,255,0.05)",
+opacity:isPast?0.45:1}}>
+<div
+style={{fontSize:"16px",fontWeight:800,color:status==="none"?"#94a3b8":"#fff",lineHeight:1}}
+>{day}</div>
+<div style={{fontSize:"16px",marginTop:"2px"}}>
+{status==="none"?"":status==="available"?"✓":status==="partial"?"〜":"✗"}
+</div>
+</div>
+);
+})}
+</div>
+</div>
+{/* Quick fill */}
+{(!isAdmin||adminViewUser)&&(
+<div
+style={{marginTop:"12px",background:"rgba(255,255,255,0.03)",borderRadius:"12px",padding:"12px
+",border:"1px solid rgba(255,255,255,0.06)"}}>
+<p style={{margin:"0 0 8px",fontSize:"12px",color:"#64748b",fontWeight:600}}
+>Ganzen Monat auf einen Schlag:</p>
+<div style={{display:"flex",gap:"8px",flexWrap:"wrap"}}>
+{Object.entries(STATUS).map(([k,l])=>(
+<button key={k} className="btn" onClick={()=>{
+for(let d=1;d<=days;d++) {
+const dk=dateKey(selYear,selMonth,d);
+const slots={};
+HOURS.forEach(h=>slots[h]=k);
+setAvData(prev=>({...prev,[uid]:{...(prev[uid]||{}),[dk]:slots}}));
+}
+notify(` ${MONTHS[selMonth]} als "${l}" gesetzt`);
+}} style={{flex:1,padding:"9px
+6px",borderRadius:"10px",fontSize:"12px",fontWeight:700,
+background:COLORS[k]+"22",color:COLORS[k],border:`1px solid ${COLORS[k]}
+44`,minWidth:"80px"}}>
+{k==="available"?"✓":k==="partial"?"〜":"✗"} {l}
+</button>
+))}
+</div>
+</div>
+)}
+</>
+);
+})()}
+</div>
+)}
+{/*
+═════════════════════════════════════════════════
+═════════════
+DAY VIEW
+═════════════════════════════════════════════════
+═════════════ */}
+{view==="day"&&selDayKey&&(
+<div className="fade-in">
+<div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"16px"}}>
+<button className="btn" onClick={()=>setView("month")}
+style={{background:"rgba(255,255,255,0.06)",color:"#94a3b8",padding:"8px
+12px",borderRadius:"10px",fontSize:"13px"}}>← Monat</button>
+<div>
+<h2
+style={{margin:0,fontSize:"18px",fontWeight:800,color:"#e0e7ff",letterSpacing:"-0.5px"}}>
+{new Date(selYear,selMonth,selDay).toLocaleDateString("de-DE",
+{weekday:"long",day:"numeric",month:"long"})}
+</h2>
+<div style={{fontSize:"12px",color:"#475569"}}>{selYear}</div>
+</div>
+</div>
+{isAdmin&&!adminViewUser?(
+// Admin: all employees for this day
+<div style={{display:"flex",flexDirection:"column",gap:"12px"}}>
+{employees.map(u=>(
+<div key={u.id} style={{background:"rgba(255,255,255,0.03)",border:`1px solid ${u.color}
+22`,borderRadius:"14px",padding:"14px"}}>
+<div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"12px"}}>
+<div
+style={{width:"36px",height:"36px",borderRadius:"50%",background:u.color,display:"flex",alignI-
+tems:"center",justifyContent:"center",fontSize:"13px",fontWeight:800,color:"#fff"}}>
+{u.name.split(" ").map(w=>w[0]).join("").slice(0,2)}
+</div>
+<div style={{flex:1}}>
+<div style={{fontSize:"15px",fontWeight:700,color:"#e2e8f0"}}>{u.name}</div>
+<div style={{fontSize:"11px",color:"#64748b"}}>{u.role}</div>
+</div>
+<div style={{display:"flex",gap:"4px"}}>
+{Object.entries(STATUS).map(([k])=>(
+<button key={k} className="btn" onClick={()=>setFullDay(u.id,selDayKey,k)}
+style={{
+width:"32px",height:"32px",borderRadius:"8px",fontSize:"14px",
+background:COLORS[k]+"22",color:COLORS[k],border:`1px solid ${COLORS[k]}
+44`}}>
+{k==="available"?"✓":k==="partial"?"〜":"✗"}
+</button>
+))}
+</div>
+</div>
+<div style={{display:"flex",gap:"4px",flexWrap:"wrap"}}>
+{HOURS.map(h=>{
+const s=avData?.[u.id]?.[selDayKey]?.[h]||"none";
+return (
+<button key={h} className="cell" onClick={()=>cycleSlot(u.id,selDayKey,h)}
+style={{
+width:"52px",height:"46px",borderRadius:"8px",fontSize:"10px",fontWeight:700,
+background:s==="none"?"rgba(255,255,255,0.04)":COLORS[s],
+color:s==="none"?"#334155":"#fff",border:s==="none"?"1px dashed
+rgba(255,255,255,0.08)":"none"}}>
+<div style={{fontSize:"9px",opacity:0.8}}>{h}</div>
+<div style={{fontSize:"16px"}}
+>{s==="none"?"·":s==="available"?"✓":s==="partial"?"〜":"✗"}</div>
+</button>
+);
+})}
+</div>
+</div>
+))}
+</div>
+):(
+// Employee: own day detail
+<div>
+<div style={{display:"flex",gap:"6px",marginBottom:"14px",flexWrap:"wrap"}}>
+<span
+style={{fontSize:"12px",color:"#64748b",alignSelf:"center",width:"100%",marginBottom:"2px"}}
+>Ganzer Tag:</span>
+{Object.entries(STATUS).map(([k,l])=>(
+<button key={k} className="btn" onClick={()=>setFullDay(activeUid,selDayKey,k)}
+style={{
+flex:1,padding:"10px 6px",borderRadius:"11px",fontSize:"13px",fontWeight:700,
+background:COLORS[k]+"22",color:COLORS[k],border:`1px solid ${COLORS[k]}
+44`,minWidth:"80px"}}>
+{k==="available"?"✓":k==="partial"?"〜":"✗"}<br/>
+<span style={{fontSize:"10px"}}>{l}</span>
+</button>
+))}
+</div>
+<div
+style={{background:"rgba(255,255,255,0.03)",borderRadius:"14px",padding:"14px",border:"1px
+solid rgba(255,255,255,0.06)"}}>
+<p style={{margin:"0 0 10px",fontSize:"12px",color:"#64748b",fontWeight:600}}>Stunden
+einzeln:</p>
+<div style={{display:"grid",gridTemplateColumns:"repeat(auto-
+fill,minmax(72px,1fr))",gap:"6px"}}>
+{HOURS.map(h=>{
+const s=avData?.[activeUid]?.[selDayKey]?.[h]||"none";
+return (
+<button key={h} className="cell" onClick={()=>cycleSlot(activeUid,selDayKey,h)}
+style={{
+height:"68px",borderRadius:"11px",
+background:s==="none"?"rgba(255,255,255,0.04)":COLORS[s],
+border:s==="none"?"1px dashed rgba(255,255,255,0.1)":"none",
+color:s==="none"?"#475569":"#fff"}}>
+<div style={{fontSize:"12px",fontWeight:700,opacity:0.85}}>{h}</div>
+<div style={{fontSize:"24px",marginTop:"2px"}}
+>{s==="none"?"·":s==="available"?"✓":s==="partial"?"〜":"✗"}</div>
+<div style={{fontSize:"9px",opacity:0.7,fontWeight:600}}>
+{s==="none"?"tippen":s==="available"?"frei":s==="partial"?"einschr.":"n.verfüg."}
+</div>
+</button>
+);
+})}
+</div>
+</div>
+</div>
+)}
+</div>
+)}
+{/*
+═════════════════════════════════════════════════
+═════════════
+ADMIN – MITARBEITER
+═════════════════════════════════════════════════
+═════════════ */}
+{view==="admin"&&isAdmin&&(
+<div className="fade-in">
+<div style={{display:"flex",justifyContent:"space-
+between",alignItems:"center",marginBottom:"16px",flexWrap:"wrap",gap:"8px"}}>
+<h2 style={{margin:0,fontSize:"22px",fontWeight:800,color:"#e0e7ff"}}> Mitarbeiter</
+h2>
+<div style={{display:"flex",gap:"8px"}}>
+<button className="btn" onClick={remindAll} style={{padding:"9px
+14px",borderRadius:"11px",background:"rgba(245,158,11,0.15)",color:"#fbbf24",fontSize:"12px",font-
+Weight:700,border:"1px solid rgba(245,158,11,0.2)"}}> Alle erinnern</button>
+<button className="btn" onClick={()=>setShowAddUser(true)} style={{padding:"9px
+14px",borderRadius:"11px",background:"linear-
+gradient(135deg,#6366f1,#8b5cf6)",color:"#fff",fontSize:"12px",fontWeight:700}}>+ Hinzufügen</
+button>
+</div>
+</div>
+<div style={{display:"flex",flexDirection:"column",gap:"10px"}}>
+{employees.map(u=>{
+const
+totalAvail=MONTHS.reduce((acc,_,mi)=>acc+getMonthStats(u.id,selYear,mi,avData).avail,0);
+const
+totalFilled=MONTHS.reduce((acc,_,mi)=>acc+getMonthStats(u.id,selYear,mi,avData).filled,0);
+return (
+<div key={u.id} style={{background:"rgba(255,255,255,0.03)",border:`1px solid ${u.color}
+22`,borderRadius:"14px",padding:"16px"}}>
+<div style={{display:"flex",alignItems:"center",gap:"12px",marginBottom:"12px"}}>
+<div
+style={{width:"44px",height:"44px",borderRadius:"50%",background:u.color,display:"flex",alignItems
+:"center",justifyContent:"center",fontSize:"16px",fontWeight:800,color:"#fff",flexShrink:0}}>
+{u.name.split(" ").map(w=>w[0]).join("").slice(0,2)}
+</div>
+<div style={{flex:1,minWidth:0}}>
+<div style={{fontSize:"15px",fontWeight:700,color:"#e2e8f0"}}>{u.name}</div>
+<div
+style={{fontSize:"12px",color:"#64748b",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"no-
+wrap"}}>{u.email}</div>
+</div>
+</div>
+<div style={{display:"flex",gap:"8px",marginBottom:"10px"}}>
+<div
+style={{flex:1,textAlign:"center",padding:"8px",background:"rgba(16,185,129,0.1)",borderRadius:"10p
+x"}}>
+<div style={{fontSize:"20px",fontWeight:800,color:"#10b981"}}>{totalAvail}</div>
+<div style={{fontSize:"10px",color:"#64748b"}}>Tage verfügbar</div>
+</div>
+<div
+style={{flex:1,textAlign:"center",padding:"8px",background:"rgba(99,102,241,0.1)",borderRadius:"10
+px"}}>
+<div style={{fontSize:"20px",fontWeight:800,color:"#6366f1"}}>{totalFilled}</div>
+<div style={{fontSize:"10px",color:"#64748b"}}>Eingetragen</div>
+</div>
+</div>
+<div style={{display:"flex",gap:"6px"}}>
+<button className="btn" onClick={()=>{setAdminViewUser(u.id);setView("year");}}
+style={{flex:1,padding:"8px",borderRadius:"9px",background:"rgba(99,102,241,0.15)",color:"#a5b4fc
+",fontSize:"12px",fontWeight:600}}> Jahresplan</button>
+<button className="btn" onClick={()=>{
+sendEmail(u.email," Bitte Verfügbarkeit eintragen",`Hallo ${u.name},\n\nbitte trage
+deine Verfügbarkeit für ${selYear} ein.\n\nVielen Dank!`);
+notify(` Erinnerung an ${u.name} gesendet`);
+}}
+style={{flex:1,padding:"8px",borderRadius:"9px",background:"rgba(245,158,11,0.1)",color:"#fbbf24",f
+ontSize:"12px",fontWeight:600}}> Erinnern</button>
+</div>
+</div>
+);
+})}
+</div>
+</div>
+)}
+{/*
+═════════════════════════════════════════════════
+═════════════
+INBOX
+═════════════════════════════════════════════════
+═════════════ */}
+{view==="inbox"&&(
+<div className="fade-in">
+<div style={{display:"flex",justifyContent:"space-
+between",alignItems:"center",marginBottom:"16px"}}>
+<h2 style={{margin:0,fontSize:"22px",fontWeight:800,color:"#e0e7ff"}}> Posteingang</
+h2>
+{emails.length>0&&<button className="btn" onClick={()=>{setEmails([]);save("jp_emails",
+[]);}} style={{padding:"7px
+12px",borderRadius:"9px",background:"rgba(239,68,68,0.1)",color:"#f87171",fontSize:"12px",font-
+Weight:600,border:"1px solid rgba(239,68,68,0.15)"}}>Alle löschen</button>}
+</div>
+{emails.length===0?(
+<div style={{textAlign:"center",padding:"60px 20px",color:"#334155"}}>
+<div style={{fontSize:"48px",marginBottom:"12px"}}> </div>
+<div style={{fontSize:"16px",fontWeight:600,color:"#475569"}}>Keine Nachrichten</div>
+<div style={{fontSize:"13px",marginTop:"4px",color:"#334155"}}>Benachrichtigungen
+erscheinen hier sobald Mitarbeiter ihre Verfügbarkeit eintragen.</div>
+</div>
+):(
+<div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
+{emails.map((m,i)=>(
+<div key={i} style={{background:"rgba(255,255,255,0.03)",border:"1px solid
+rgba(255,255,255,0.07)",borderRadius:"12px",padding:"14px"}}>
+<div style={{fontSize:"14px",fontWeight:700,color:"#e2e8f0",marginBottom:"3px"}}
+>{m.subject}</div>
+<div style={{fontSize:"11px",color:"#475569",marginBottom:"8px"}}>An: {m.to} ·
+{m.sentAt}</div>
+<pre style={{margin:0,fontSize:"12px",color:"#94a3b8",whiteSpace:"pre-
+wrap",fontFamily:"inherit",lineHeight:1.5,background:"rgba(0,0,0,0.2)",padding:"10px",borderRadius:
+"8px"}}>
+{m.body}
+</pre>
+</div>
+))}
+</div>
+)}
+</div>
+)}
+</div>
+{/* ── Bottom Navigation (mobile)
+──────────────────────────────────── */}
+<div
+style={{position:"fixed",bottom:0,left:0,right:0,background:"rgba(7,13,26,0.97)",backdropFilter:"blur(
+20px)",
+borderTop:"1px solid rgba(255,255,255,0.07)",padding:"8px 0",paddingBottom:"env(safe-area-
+inset-bottom, 8px)",
+display:"flex",justifyContent:"space-around",zIndex:100}}>
+{[
+["year"," ","Jahr"],
+["month"," ","Monat"],
+...(isAdmin?[["admin"," ","Team"],["inbox"," ","Post"]]:[] ),
+].map(([v,icon,label])=>(
+<button key={v} className="nav-item" onClick={()=>setView(v)} style={{
+display:"flex",flexDirection:"column",alignItems:"center",gap:"2px",padding:"4px 16px",
+background:"transparent",color:view===v?"#a5b4fc":"#475569",
+borderRadius:"12px",minWidth:"60px",position:"relative"}}>
+<span style={{fontSize:"22px"}}>{icon}</span>
+<span style={{fontSize:"10px",fontWeight:600}}>{label}</span>
+{v==="inbox"&&emails.length>0&&(
+<div
+style={{position:"absolute",top:0,right:"8px",background:"#ef4444",borderRadius:"99px",
+fontSize:"8px",fontWeight:800,color:"#fff",padding:"1px
+5px",minWidth:"14px",textAlign:"center"}}>
+{emails.length>9?"9+":emails.length}
+</div>
+)}
+{view===v&&<div
+style={{position:"absolute",bottom:"-8px",width:"20px",height:"2px",borderRadius:"99px",back-
+ground:"#6366f1"}}/>}
+</button>
+))}
+</div>
+{/* ── Add User Modal
+───────────────────────────────────────────────
+─ */}
+{showAddUser&&(
+<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",backdropFilter:"blur(10px)",
+display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:500,padding:"16px"}}
+onClick={()=>setShowAddUser(false)}>
+<div style={{background:"#0f172a",border:"1px solid
+rgba(99,102,241,0.3)",borderRadius:"20px",
+padding:"28px",width:"100%",maxWidth:"440px",boxShadow:"0 -20px 60px
+rgba(0,0,0,0.6)"}}
+onClick={e=>e.stopPropagation()}>
+<h3 style={{margin:"0 0 20px",fontSize:"20px",fontWeight:800,color:"#e0e7ff"}}>Mitarbeiter
+hinzufügen</h3>
+{[["name","Name *"],["email","E-Mail *"],["pw","Passwort *"],
+["role","Position"]].map(([field,label])=>(
+<div key={field} style={{marginBottom:"10px"}}>
+<label
+style={{display:"block",fontSize:"11px",color:"#94a3b8",marginBottom:"4px",fontWeight:700,text-
+Transform:"uppercase",letterSpacing:"0.05em"}}>{label}</label>
+<input value={newUser[field]} onChange={e=>setNewUser(p=>({...p,
+[field]:e.target.value}))}
+placeholder={label} type={field==="pw"?"password":"text"}
+style={{width:"100%",padding:"12px
+14px",borderRadius:"10px",background:"rgba(255,255,255,0.06)",border:"1px solid
+rgba(255,255,255,0.1)",color:"#f1f5f9",fontSize:"15px"}}/>
+</div>
+))}
+<div style={{marginBottom:"18px"}}>
+<label
+style={{display:"block",fontSize:"11px",color:"#94a3b8",marginBottom:"8px",fontWeight:700,text-
+Transform:"uppercase"}}>Farbe</label>
+<div style={{display:"flex",gap:"8px",flexWrap:"wrap"}}>
+{EMP_COLORS.map(c=>(
+<div key={c} onClick={()=>setNewUser(p=>({...p,color:c}))}
+style={{width:"32px",height:"32px",borderRadius:"50%",background:c,cursor:"pointer",
+outline:newUser.color===c?"3px solid #fff":"none",outlineOffset:"2px",transition:"all
+.15s"}}/>
+))}
+</div>
+</div>
+<div style={{display:"flex",gap:"8px"}}>
+<button className="btn" onClick={()=>setShowAddUser(false)}
+style={{flex:1,padding:"12px",borderRadius:"11px",background:"rgba(255,255,255,0.06)",color:"#94
+a3b8",fontSize:"14px",fontWeight:600}}>Abbrechen</button>
+<button className="btn" onClick={addUser}
+style={{flex:2,padding:"12px",borderRadius:"11px",background:"linear-
+gradient(135deg,#6366f1,#8b5cf6)",color:"#fff",fontSize:"14px",fontWeight:700}}>
+Hinzufügen & Einladen
+</butto
